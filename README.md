@@ -12,8 +12,8 @@ SAT's [Domeport](https://github.com/sat-mtl/DomeportPro) is a dome and planetari
 
 ## the two fixes
 
-1. **Qt Quick 3D was missing from the web build.** The ossia wasm SDK is configured with `-skip qtquick3d`, so the browser said `module "QtQuick3D" is not installed` and the dome never loaded. Fix: build Qt Quick 3D into the SDK. Patch: `fix/patches/0001-ossia-sdk-wasm-build-qtquick3d.patch`. PR: (link)
-2. **Then it stopped on start.** Domeport starts playback as soon as it loads, and in the web build score's audio engine only starts one event-loop turn later, so score stopped with `Cannot playback without an audio engine set up`. Fix: start Domeport's controller one turn later. Patch: `fix/patches/0002-domeport-defer-initialize-for-wasm-audio.patch`, already applied in `qml/` here. PR: (link)
+1. **Qt Quick 3D was missing from the web build.** The ossia wasm SDK is configured with `-skip qtquick3d`, so the browser said `module "QtQuick3D" is not installed` and the dome never loaded. Fix: build Qt Quick 3D into the SDK. Patch: `fix/patches/0001-ossia-sdk-wasm-build-qtquick3d.patch`. PR: https://github.com/ossia/sdk/pull/49
+2. **Then it stopped on start.** Domeport starts playback as soon as it loads, and in the web build score's audio engine only starts one event-loop turn later, so score stopped with `Cannot playback without an audio engine set up`. Fix: start Domeport's controller one turn later. Patch: `fix/patches/0002-domeport-defer-initialize-for-wasm-audio.patch`, already applied in `qml/` here. PR: https://github.com/sat-mtl/DomeportPro/pull/99
 
 ## what is in here
 
