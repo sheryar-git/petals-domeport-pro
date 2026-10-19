@@ -1,5 +1,21 @@
+diff --git a/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp b/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp
+index 40b5730..0145a7f 100644
+--- a/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp
++++ b/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp
+@@ -167,7 +167,10 @@ void Model::setPath(const QString& f)
+ 
+   {
+     // FIXME store the metadatas in cache instead of reopening the video every time
+-    video_decoder decoder(videoDecoderConfiguration());
++    // Opened only to read metadata, then dropped: not a playback decoder.
++    auto conf = videoDecoderConfiguration();
++    conf.useCase = ::Video::DecodeUseCase::Thumbnail;
++    video_decoder decoder(conf);
+     decoder.open(absolutePath().toStdString());
+ 
+     if(auto prop = guessVideoProps(absolutePath()); prop && prop->duration.impl > 0)
 diff --git a/src/plugins/score-plugin-media/Video/DecoderThreading.hpp b/src/plugins/score-plugin-media/Video/DecoderThreading.hpp
-index e9879ed..087446c 100644
+index e9879ed..a2aa19a 100644
 --- a/src/plugins/score-plugin-media/Video/DecoderThreading.hpp
 +++ b/src/plugins/score-plugin-media/Video/DecoderThreading.hpp
 @@ -178,8 +178,16 @@ inline DecoderThreading chooseDecoderThreading(
@@ -8,14 +24,14 @@ index e9879ed..087446c 100644
    // A multithreaded context crashes on teardown on the emscripten pthread
 -  // runtime, even when no frame was decoded.
 -  return {1, 0, false, "single-threaded on wasm"};
-+  // runtime, even when no frame was decoded. So stay single-threaded, unless
-+  // the page asks for threads with SCORE_VIDEO_THREADS or
-+  // SCORE_VIDEO_THREADING: a player that never tears its decoder down can
-+  // then keep up with large videos.
++  // runtime, even when no frame was decoded. So stay single-threaded, except
++  // for playback when the page asks for threads with SCORE_VIDEO_THREADS or
++  // SCORE_VIDEO_THREADING: a player that keeps its decoder for the whole
++  // session can then keep up with large videos.
 +  {
 +    bool asked{};
 +    envThreadType(asked);
-+    if(!asked && envThreadCount() <= 0)
++    if(use != DecodeUseCase::Playback || (!asked && envThreadCount() <= 0))
 +      return {1, 0, false, "single-threaded on wasm"};
 +  }
  #endif

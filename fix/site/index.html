@@ -68,6 +68,9 @@
           const dest = '/app/media/' + item.video.split('/').pop();
           preload.push({ source: item.video, destination: dest });
           env.PETALS_DOME_VIDEO = dest;
+          // Decode on several threads (score patch fix/patches/score/0001). The
+          // page never swaps the video out, so the decoder is never torn down.
+          env.SCORE_VIDEO_THREADING = 'frame';
         }
         const preloadUrl = URL.createObjectURL(new Blob([JSON.stringify(preload)], { type: 'application/json' }));
 
