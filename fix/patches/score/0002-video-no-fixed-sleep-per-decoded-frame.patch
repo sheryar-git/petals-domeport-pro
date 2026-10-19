@@ -1,0 +1,19 @@
+diff --git a/src/plugins/score-plugin-media/Video/VideoDecoder.cpp b/src/plugins/score-plugin-media/Video/VideoDecoder.cpp
+index 96419c0..404a302 100644
+--- a/src/plugins/score-plugin-media/Video/VideoDecoder.cpp
++++ b/src/plugins/score-plugin-media/Video/VideoDecoder.cpp
+@@ -555,11 +555,13 @@ void VideoDecoder::buffer_thread() noexcept
+ 
+       if(m_frames.size() < (frames_to_buffer / 2) && !m_finished)
+       {
++        // No sleep here: the wait above already stops once the queue is half
++        // full, and a fixed pause per frame caps how fast a slow decoder can
++        // refill it.
+         if(auto f = read_frame_impl())
+         {
+           m_frames.enqueue(f);
+         }
+-        std::this_thread::sleep_for(std::chrono::milliseconds(4));
+       }
+     }
+   }

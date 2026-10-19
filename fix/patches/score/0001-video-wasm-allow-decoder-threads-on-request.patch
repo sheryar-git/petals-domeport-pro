@@ -1,0 +1,23 @@
+diff --git a/src/plugins/score-plugin-media/Video/DecoderThreading.hpp b/src/plugins/score-plugin-media/Video/DecoderThreading.hpp
+index e9879ed..087446c 100644
+--- a/src/plugins/score-plugin-media/Video/DecoderThreading.hpp
++++ b/src/plugins/score-plugin-media/Video/DecoderThreading.hpp
+@@ -178,8 +178,16 @@ inline DecoderThreading chooseDecoderThreading(
+   using namespace threading;
+ #if defined(__EMSCRIPTEN__)
+   // A multithreaded context crashes on teardown on the emscripten pthread
+-  // runtime, even when no frame was decoded.
+-  return {1, 0, false, "single-threaded on wasm"};
++  // runtime, even when no frame was decoded. So stay single-threaded, unless
++  // the page asks for threads with SCORE_VIDEO_THREADS or
++  // SCORE_VIDEO_THREADING: a player that never tears its decoder down can
++  // then keep up with large videos.
++  {
++    bool asked{};
++    envThreadType(asked);
++    if(!asked && envThreadCount() <= 0)
++      return {1, 0, false, "single-threaded on wasm"};
++  }
+ #endif
+   if(hardware || (codec.capabilities & AV_CODEC_CAP_HARDWARE))
+     return {1, 0, false, "hardware decoder"};

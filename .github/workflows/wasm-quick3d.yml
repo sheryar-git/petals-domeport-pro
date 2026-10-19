@@ -38,6 +38,11 @@ jobs:
           path: score-src
           submodules: recursive
 
+      - name: score patches (video playback in the browser)
+        working-directory: score-src
+        run: |
+          for p in ../fix/patches/score/*.patch; do git apply "$p"; echo "applied $p"; done
+
       - name: Host build deps (ossia/sdk wasm.yml list)
         run: |
           sudo apt-get update
