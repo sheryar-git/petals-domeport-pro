@@ -1,0 +1,145 @@
+name: Domeport wasm with QtQuick3D
+
+#      _
+#    _(_)_      Domeport for the web, with the 3D dome working.
+#   (_)@(_)
+#     (_)\      The ossia wasm SDK (release sdk44) leaves out Qt Quick 3D, so the
+#        |      dome can't load. Rather than rebuild the whole SDK, this job
+#               builds only qtquick3d on top of sdk44, at the SDK's own Qt pin,
+#               then builds score and packages Domeport the way full-build.yml
+#               does. The proper fix for the SDK is fix/patches/0001.
+
+on:
+  workflow_dispatch:
+
+env:
+  SDK_COMMIT: d393c802e19bbf96c76f10365a70b84a09a1a253   # ossia/sdk, built release sdk44
+  QT_VERSION: da7ca1ee7595c003b638ecc9294e6c1e6890eae3   # common/versions.sh at SDK_COMMIT
+  SCORE_REF: dad5bd37336d0e962207c3641bc6a7ecc22e217c   # ossia/score v3.9.0, uses sdk44
+
+jobs:
+  wasm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - name: Free disk
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ossia/score
+          ref: ${{ env.SCORE_REF }}
+          path: score-src
+          submodules: recursive
+
+      - name: Host build deps (ossia/sdk wasm.yml list)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config \
+            libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev libx11-xcb-dev \
+            libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev \
+            libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev \
+            libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev \
+            libxcb-util-dev libxcb-xinerama0-dev libxcb-cursor-dev \
+            libfontconfig1-dev libfreetype-dev libglib2.0-dev \
+            libssl-dev libpcre2-dev zlib1g-dev
+
+      - name: score wasm deps (downloads sdk44)
+        working-directory: score-src
+        run: ./ci/wasm.deps.sh
+
+      - name: qtquick3d source at the SDK pin
+        run: |
+          git init -q qt && cd qt
+          git remote add origin https://github.com/qt/qt5
+          git fetch -q --depth 1 origin $QT_VERSION
+          git checkout -q FETCH_HEAD
+          git submodule update --init --depth 1 qtquick3d
+          cd qtquick3d
+          git log --oneline -1
+          for p in ../../ci/qtquick3d-patches/*.patch; do git apply "$p"; echo "applied $p"; done
+
+      - name: qtquick3d for the host tools (qt6-host)
+        run: |
+          export LD_LIBRARY_PATH=/opt/ossia-sdk-wasm/qt6-host/lib
+          mkdir qq3d-host && cd qq3d-host
+          /opt/ossia-sdk-wasm/qt6-host/bin/qt-configure-module ../qt/qtquick3d -no-feature-quick3d-assimp
+          cmake --build . --parallel
+          cmake --install .
+
+      - name: qtquick3d for wasm (qt-wasm)
+        run: |
+          export LD_LIBRARY_PATH=/opt/ossia-sdk-wasm/qt6-host/lib
+          source /opt/ossia-sdk-wasm/emsdk/emsdk_env.sh
+          # ossia/sdk WASM/common.sh flags, so the objects match the SDK's qtbase
+          F="-O3 -g0 -sABORTING_MALLOC=1 -pthread -sWASM_BIGINT=1 -sASSERTIONS=0 -sSAFE_HEAP=0 -sSTACK_OVERFLOW_CHECK=0 -sFETCH=1 -pthread -fnew-infallible -fno-plt -fno-semantic-interposition -msimd128 -mrelaxed-simd -fwasm-exceptions"
+          mkdir qq3d-wasm && cd qq3d-wasm
+          /opt/ossia-sdk-wasm/qt-wasm/bin/qt-configure-module ../qt/qtquick3d -no-feature-quick3d-assimp -- \
+            -DCMAKE_C_FLAGS="$F" -DCMAKE_CXX_FLAGS="$F" -DCMAKE_CXX_STANDARD=23 \
+            -DQT_DO_EXPORT_SYMBOLS=0   # sdk44's qtbase export header reads this; the SDK's own superbuild sets it to 0 after qtbase
+          cmake --build . --parallel
+          cmake --install .
+          ls /opt/ossia-sdk-wasm/qt-wasm/lib/cmake/Qt6Qml/QmlPlugins | grep -i quick3d
+
+      - name: score wasm build
+        working-directory: score-src
+        env:
+          SCORE_EXTRA_CMAKE_ARGS: >
+            -DSCORE_ENABLED_ADDONS=score-addon-ndi
+            -DSCORE_DISABLE_PLUGINS=score-plugin-avnd,score-plugin-clap,score-plugin-controlsurface,score-plugin-faust,score-plugin-jit,score-plugin-lv2,score-plugin-mapping,score-plugin-nodal,score-plugin-packagemanager,score-plugin-pd,score-plugin-recording,score-plugin-remotecontrol,score-plugin-spline,score-plugin-spline3d,score-plugin-threedim,score-plugin-vst,score-plugin-vst3,score-plugin-ysfx
+            -DSCORE_STRICT_FEATURE_CHECK=0
+        run: |
+          ./ci/wasm.build.sh
+          echo "quick3d plugin refs in build.ninja: $(grep -o 'qquick3dplugin[^ ]*' /build/build.ninja | sort -u | head -5)"
+
+      - name: score wasm bundle
+        working-directory: score-src
+        run: |
+          BUNDLE="$PWD/wasm-bundle"; mkdir -p "$BUNDLE" staging
+          cp /build/*.js /build/ossia-score.wasm "$BUNDLE/"
+          [[ -f /build/ossia-score.data ]] && cp /build/ossia-score.data "$BUNDLE/"
+          cp cmake/Deployment/WASM/* "$BUNDLE/"
+          ( cd "$BUNDLE" && zip -r -q "$PWD/../staging/ossia.score-wasm.zip" . )
+          ls -la staging
+
+      - name: Upload score build
+        id: score
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: score-src/staging/*.zip
+
+      - name: Package Domeport (basic)
+        uses: ossia/actions/package-custom-app@master
+        with:
+          output-path: packages-basic
+          app-name: "Domeport"
+          qml-files: "qml"
+          score-file: "score/app.score"
+          score-build-id: ${{ steps.score.outputs.artifact-id }}
+          platforms: "wasm"
+          app-organization: "SAT"
+          app-domain: "sat.qc.ca"
+          app-identifier: "ca.qc.sat.domeportpro"
+          app-description: "Domemaster / equirectangular content visualizer for dome and planetariums in 3D environment"
+          app-copyright: "Société des Arts Technologiques"
+          app-version: "1.0"
+          app-png: "qml/domeportpro/resources/images/DomeportPro.png"
+          app-ico: "qml/domeportpro/resources/images/DomeportPro.ico"
+          app-icns: "qml/domeportpro/resources/images/DomeportPro.icns"
+          app-environment: environment
+
+      - name: Upload Domeport wasm
+        uses: actions/upload-artifact@v4
+        with:
+          name: domeport-wasm-quick3d
+          path: packages-basic/*.zip
+          retention-days: 7
