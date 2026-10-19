@@ -1,6 +1,8 @@
-# Domeport on the web, with the dome working
+# Petals Domeport Pro
 
-SAT's [Domeport](https://github.com/sat-mtl/DomeportPro) is a dome and planetarium previewer built on [ossia score](https://github.com/ossia/score). Its web build loaded but never drew the dome. This repo is the copy of Domeport we built with two fixes, and it is what runs at [petals.fm/dome](https://petals.fm/dome).
+SAT's dome previewer, working in a web browser.
+
+**Live:** [petals.fm/dome](https://petals.fm/dome)
 
 ```
      _
@@ -10,30 +12,30 @@ SAT's [Domeport](https://github.com/sat-mtl/DomeportPro) is a dome and planetari
        |
 ```
 
-## the two fixes
+[Domeport](https://github.com/sat-mtl/DomeportPro) by the Société des arts technologiques (SAT) shows dome and planetarium content the way an audience would see it. It runs on [ossia score](https://github.com/ossia/score). Its web build loaded but never drew the dome. This is the same app with the fixes it needed, and it's what runs at petals.fm/dome.
 
-1. **Qt Quick 3D was missing from the web build.** The ossia wasm SDK is configured with `-skip qtquick3d`, so the browser said `module "QtQuick3D" is not installed` and the dome never loaded. Fix: build Qt Quick 3D into the SDK. Patch: `fix/patches/0001-ossia-sdk-wasm-build-qtquick3d.patch`. PR: https://github.com/ossia/sdk/pull/49
-2. **Then it stopped on start.** Domeport starts playback as soon as it loads, and in the web build score's audio engine only starts one event-loop turn later, so score stopped with `Cannot playback without an audio engine set up`. Fix: start Domeport's controller one turn later. Patch: `fix/patches/0002-domeport-defer-initialize-for-wasm-audio.patch`, already applied in `qml/` here. PR: https://github.com/sat-mtl/DomeportPro/pull/99
+## Fixes, sent upstream
 
-## what is in here
+| | what was wrong | pull request |
+|---|---|---|
+| ossia SDK | Qt Quick 3D was left out of the web build, so the dome could not load | [ossia/sdk#49](https://github.com/ossia/sdk/pull/49) |
+| Domeport | it started playback before the browser's audio engine was ready, and stopped | [sat-mtl/DomeportPro#99](https://github.com/sat-mtl/DomeportPro/pull/99) |
 
-- Domeport at [65d6a42](https://github.com/sat-mtl/DomeportPro/commit/65d6a4273962d17f475d1f8e5674ee57575ff289), with fix 2 applied
-- `.github/workflows/wasm-quick3d.yml`: the build. It adds Qt Quick 3D on top of the existing SDK (release sdk44) instead of rebuilding the whole SDK, then builds score v3.9.0 and packages Domeport.
-- `fix/patches/`: both fixes as patches against upstream
-- `fix/site/`: our page around the build. It loads a DomeMaster still or a DomeMaster video from `media.json`.
-- `fix/screenshots/`: before and after, headless Chromium
+## Smoother video
 
-## tested
+Two small changes to score's video decoder (`fix/patches/score/`): the browser build can decode on several threads when the page asks, and it no longer sleeps 4 ms after every frame. A 2048 x 2048 dome film went from 24 to 29.5 frames a second, with picture and sound in step through the loop (Chrome on an M4 Pro). How it was measured: `fix/measure.mjs`. Not sent upstream yet.
 
-- Headless Chromium with software WebGL. Stills draw on the dome. H.264 DomeMaster video plays with sound at 2048 and 4096 square.
-- Not tested: Safari (the build needs WebAssembly JSPI, which Safari doesn't have), phones, the desktop apps.
+## What's here
 
-## one more thing we found
+- `qml/`, `score/`, `docs/`: Domeport, at [65d6a42](https://github.com/sat-mtl/DomeportPro/commit/65d6a4273962d17f475d1f8e5674ee57575ff289), with its fix applied
+- `.github/workflows/wasm-quick3d.yml`: the web build
+- `fix/patches/`: every change, as a patch against upstream
+- `fix/site/`: the page around the viewer, for stills and video
+- `fix/screenshots/`: before and after
+- `fix/measure.mjs`, `fix/analyze.mjs`: frame pacing and picture-to-sound offset, in headless Chrome
 
-In the web build, `Score.play()` straight after `Score.stop()` leaves the dome flat grey. Waiting about a second before `play()` draws fine. Domeport's image and video pickers do stop then play, so our page opens videos with that delay (`fix/site/DomeportView.qml`). We haven't found the cause in score.
+Tested in Chrome (headless). Safari can't run it yet: the build needs WebAssembly JSPI.
 
-## licence
+## Credit
 
-GPL-3.0, same as Domeport. See `LICENSE`. Upstream README: `README-DomeportPro.md`.
-
-Thanks to SAT and the ossia team for these tools.
+Domeport is by [SAT](https://sat.qc.ca). ossia score and its SDK are by the [ossia](https://ossia.io) team. Thank you both. GPL-3.0, like Domeport: see `LICENSE`. Domeport's own README is in `README-DomeportPro.md`.
