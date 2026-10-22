@@ -4,10 +4,10 @@ name: Domeport wasm with QtQuick3D
 #    _(_)_      Domeport for the web, with the 3D dome working.
 #   (_)@(_)
 #     (_)\      The ossia wasm SDK (release sdk44) leaves out Qt Quick 3D, so the
-#        |      dome can't load. Rather than rebuild the whole SDK, this job
-#               builds only qtquick3d on top of sdk44, at the SDK's own Qt pin,
-#               then builds score and packages Domeport the way full-build.yml
-#               does. The proper fix for the SDK is fix/patches/0001.
+#        |      dome can't load. This job builds only qtquick3d on top of
+#               sdk44, at the SDK's own Qt pin, then builds score and packages
+#               Domeport the way SAT's own release build does. The fix for the
+#               SDK itself is fix/patches/0001, now merged into ossia/sdk.
 
 on:
   workflow_dispatch:

@@ -29,8 +29,11 @@ Item {
     property var domeportModel
     property var appWindow
 
-    // Start one turn late (the web build's audio engine comes up on the next
-    // turn), show DomeMasters, and open the video index.html preloaded, if any.
+    //    _
+    //  _(_)_   Start one turn late (the web build's audio engine comes up on
+    // (_)@(_)  the next turn), show DomeMasters, and open the film named in
+    //   (_)\   PETALS_DOME_VIDEO, if the page set one.
+    //      |
     Component.onCompleted: Qt.callLater(function() {
         Controller.initialize()
         domeportModel.currentFormat = "Domemaster"

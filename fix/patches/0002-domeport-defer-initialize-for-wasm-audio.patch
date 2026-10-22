@@ -1,3 +1,9 @@
+     _
+   _(_)_   Domeport: start one event-loop turn later in the web build
+  (_)@(_)
+    (_)\
+       |
+
 diff --git a/qml/domeportpro/DomeportView.qml b/qml/domeportpro/DomeportView.qml
 index 52efcba..f61fc5e 100644
 --- a/qml/domeportpro/DomeportView.qml

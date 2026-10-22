@@ -23,14 +23,15 @@ SAT's dome previewer, working in a web browser.
 
 ## Smoother video
 
-Two small changes to score's video decoder (`fix/patches/score/`): the browser build can decode on several threads when the page asks, and it no longer sleeps 4 ms after every frame. A 2048 x 2048 dome film went from 24 to 29.5 frames a second, with picture and sound in step through the loop.
+Two small changes to score's video decoder (`fix/patches/score/`): the browser build can decode on several threads when the page asks, and it no longer sleeps 4 ms after every frame. A 2048 x 2048 dome film plays close to its full 30 frames a second, with picture and sound in step through the loop.
 
 ## What's here
 
 - `qml/`, `score/`, `docs/`: Domeport, at [65d6a42](https://github.com/sat-mtl/DomeportPro/commit/65d6a4273962d17f475d1f8e5674ee57575ff289), with its fix applied
 - `.github/workflows/wasm-quick3d.yml`: the web build
-- `fix/patches/`: every change, as a patch against upstream
-- `fix/site/DomeportView.qml`: the viewer's main view, set up to open a film when the page loads
+- `fix/patches/`: our changes to the ossia SDK, Domeport and score, as patches against upstream
+- `fix/site/`: the two QML files petals.fm/dome serves in place of SAT's: `DomeportView.qml` (opens a film when the page loads) and `SidePanel.qml` (the menu icon, drawn without SVG)
+- `ci/qtquick3d-patches/`: two Qt Quick 3D patches, copied unchanged from [ossia/sdk](https://github.com/ossia/sdk) at d393c80
 
 Tested in Chrome (headless). Safari can't run it yet: the build needs WebAssembly JSPI.
 

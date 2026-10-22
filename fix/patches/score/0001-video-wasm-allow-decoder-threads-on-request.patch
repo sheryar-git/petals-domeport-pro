@@ -1,3 +1,9 @@
+     _
+   _(_)_   score: let a web page ask for video decoder threads
+  (_)@(_)
+    (_)\
+       |
+
 diff --git a/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp b/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp
 index 40b5730..0145a7f 100644
 --- a/src/plugins/score-plugin-gfx/Gfx/Video/Process.cpp

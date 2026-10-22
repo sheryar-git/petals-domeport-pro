@@ -1,3 +1,9 @@
+     _
+   _(_)_   ossia SDK: build Qt Quick 3D into the web build (merged as ossia/sdk#49)
+  (_)@(_)
+    (_)\
+       |
+
 diff --git a/WASM/qt.sh b/WASM/qt.sh
 index 191b145..2721da7 100755
 --- a/WASM/qt.sh
