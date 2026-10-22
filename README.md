@@ -1,4 +1,10 @@
-# Petals Domeport Pro
+# Petals Domeport
+
+A free and open-source tool for dome visual composition and sequencing in sync with DAWs and devices via Ableton Link.
+
+In development.
+
+## Today
 
 SAT's dome previewer, working in a web browser.
 
