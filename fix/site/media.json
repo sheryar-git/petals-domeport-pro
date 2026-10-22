@@ -1,6 +1,0 @@
-{
-  "items": [
-    { "id": "under-the-wisteria", "title": "Under the wisteria", "src": "media/02-under-the-wisteria.png" },
-    { "id": "test-video", "title": "Test video", "video": "media/test-4096.mp4" }
-  ]
-}

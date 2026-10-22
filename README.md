@@ -18,21 +18,19 @@ SAT's dome previewer, working in a web browser.
 
 | | what was wrong | pull request |
 |---|---|---|
-| ossia SDK | Qt Quick 3D was left out of the web build, so the dome could not load | [ossia/sdk#49](https://github.com/ossia/sdk/pull/49) |
-| Domeport | it started playback before the browser's audio engine was ready, and stopped | [sat-mtl/DomeportPro#99](https://github.com/sat-mtl/DomeportPro/pull/99) |
+| ossia SDK | Qt Quick 3D was left out of the web build, so the dome could not load | [ossia/sdk#49](https://github.com/ossia/sdk/pull/49), merged |
+| Domeport | it started playback before the browser's audio engine was ready, and stopped | [sat-mtl/DomeportPro#99](https://github.com/sat-mtl/DomeportPro/pull/99), closed |
 
 ## Smoother video
 
-Two small changes to score's video decoder (`fix/patches/score/`): the browser build can decode on several threads when the page asks, and it no longer sleeps 4 ms after every frame. A 2048 x 2048 dome film went from 24 to 29.5 frames a second, with picture and sound in step through the loop (Chrome on an M4 Pro). How it was measured: `fix/measure.mjs`. Not sent upstream yet.
+Two small changes to score's video decoder (`fix/patches/score/`): the browser build can decode on several threads when the page asks, and it no longer sleeps 4 ms after every frame. A 2048 x 2048 dome film went from 24 to 29.5 frames a second, with picture and sound in step through the loop.
 
 ## What's here
 
 - `qml/`, `score/`, `docs/`: Domeport, at [65d6a42](https://github.com/sat-mtl/DomeportPro/commit/65d6a4273962d17f475d1f8e5674ee57575ff289), with its fix applied
 - `.github/workflows/wasm-quick3d.yml`: the web build
 - `fix/patches/`: every change, as a patch against upstream
-- `fix/site/`: the page around the viewer, for stills and video
-- `fix/screenshots/`: before and after
-- `fix/measure.mjs`, `fix/analyze.mjs`: frame pacing and picture-to-sound offset, in headless Chrome
+- `fix/site/DomeportView.qml`: the viewer's main view, set up to open a film when the page loads
 
 Tested in Chrome (headless). Safari can't run it yet: the build needs WebAssembly JSPI.
 
