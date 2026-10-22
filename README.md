@@ -18,8 +18,8 @@ SAT's dome previewer, working in a web browser.
 
 | | what was wrong | pull request |
 |---|---|---|
-| ossia SDK | Qt Quick 3D was left out of the web build, so the dome could not load | [ossia/sdk#49](https://github.com/ossia/sdk/pull/49), merged |
-| Domeport | it started playback before the browser's audio engine was ready, and stopped | [sat-mtl/DomeportPro#99](https://github.com/sat-mtl/DomeportPro/pull/99), closed |
+| ossia SDK | Qt Quick 3D was left out of the web build, so the dome could not load | [ossia/sdk#49](https://github.com/ossia/sdk/pull/49) |
+| Domeport | it started playback before the browser's audio engine was ready, and stopped | [sat-mtl/DomeportPro#99](https://github.com/sat-mtl/DomeportPro/pull/99) |
 
 ## Smoother video
 
